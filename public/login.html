@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" id="login-page">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Model Hub — Login</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #07070a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+  }
+  .card {
+    width: 100%;
+    max-width: 380px;
+    background: #0d0d12;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 36px 32px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { opacity:0; transform: translateY(16px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .logo img { width: 52px; height: 52px; }
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f1f5f9;
+    text-align: center;
+    letter-spacing: -0.03em;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 12px;
+    text-align: center;
+    color: #475569;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 28px;
+  }
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #475569;
+    margin-bottom: 6px;
+  }
+  .input-wrap { position: relative; }
+  input[type="password"], input[type="text"] {
+    width: 100%;
+    padding: 10px 40px 10px 12px;
+    border-radius: 8px;
+    background: #13131a;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #f1f5f9;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input:focus {
+    border-color: rgba(99,102,241,0.6);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
+  .toggle-eye {
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #475569;
+    background: none; border: none;
+    padding: 4px;
+    transition: color 0.15s;
+  }
+  .toggle-eye:hover { color: #94a3b8; }
+  .btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 11px;
+    border-radius: 8px;
+    background: #6366f1;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.01em;
+  }
+  .btn:hover { background: #4f46e5; box-shadow: 0 0 0 3px rgba(99,102,241,0.25); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .error {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 7px;
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.25);
+    color: #fca5a5;
+    font-size: 12px;
+    display: none;
+  }
+  .footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 11px;
+    color: #334155;
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <img src="images/logo.svg" alt="Model Hub">
+  </div>
+  <div class="title">Model Hub</div>
+  <div class="subtitle">Enter password to continue</div>
+
+  <label for="password">Password</label>
+  <div class="input-wrap">
+    <input type="password" id="password" placeholder="••••••••" autofocus autocomplete="current-password">
+    <button class="toggle-eye" onclick="togglePw()" type="button" tabindex="-1">
+      <svg id="eye-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="error" id="error-msg">Incorrect password. Please try again.</div>
+
+  <button class="btn" id="login-btn" onclick="doLogin()">Sign In</button>
+
+  <div class="footer">Model Hub Console</div>
+</div>
+
+<script>
+  // If no password is set, skip login entirely
+  fetch('/api/config').then(r => r.json()).then(data => {
+    const hasPassword = data?.config?.webuiPassword && data.config.webuiPassword !== '';
+    if (!hasPassword || data.config.webuiPassword === '********') {
+      // Password is set (redacted means it exists), show login
+      // No password set — go straight to dashboard
+      if (!hasPassword) {
+        sessionStorage.setItem('mh_auth', 'no-password');
+        window.location.href = '/dashboard.html';
+      }
+    }
+  }).catch(() => {});
+
+  // Check if already authenticated this session
+  if (sessionStorage.getItem('mh_auth')) {
+    window.location.href = '/dashboard.html';
+  }
+
+  function togglePw() {
+    const inp = document.getElementById('password');
+    const icon = document.getElementById('eye-icon');
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 4.411m0 0L21 21"/>';
+    } else {
+      inp.type = 'password';
+      icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+    }
+  }
+
+  document.getElementById('password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  async function doLogin() {
+    const pw = document.getElementById('password').value;
+    const btn = document.getElementById('login-btn');
+    const err = document.getElementById('error-msg');
+    if (!pw) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+    err.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/accounts', {
+        headers: { 'x-webui-password': pw }
+      });
+
+      if (res.ok) {
+        sessionStorage.setItem('mh_auth', pw);
+        window.location.href = '/dashboard.html';
+      } else if (res.status === 401) {
+        err.style.display = 'block';
+        document.getElementById('password').value = '';
+        document.getElementById('password').focus();
+      } else {
+        err.textContent = 'Server error. Is Model Hub running?';
+        err.style.display = 'block';
+      }
+    } catch {
+      err.textContent = 'Cannot connect to Model Hub.';
+      err.style.display = 'block';
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+</script>
+</body>
+</html>
