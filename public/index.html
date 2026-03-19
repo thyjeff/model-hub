@@ -5,7 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Model Hub Console</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    
+    <!-- Auth redirect — runs instantly before page renders -->
+    <script>
+      (function() {
+        var stored = localStorage.getItem('mh_pw_token');
+        // If never visited before (no token at all), go to login/setup
+        if (stored === null) {
+          window.location.replace('/login.html');
+        }
+        // If token exists (even __no_password__), let app.js handle validation
+      })();
+    </script>
 
     <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

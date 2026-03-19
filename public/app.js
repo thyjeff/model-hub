@@ -1,66 +1,75 @@
 /**
  * Model Hub Console - Main Entry
- *
- * This file orchestrates Alpine.js initialization.
- * Components are loaded via separate script files that register themselves
- * to window.Components before this script runs.
  */
 
 // ── Auth Guard ──────────────────────────────────────────────────────────────
+// Runs before Alpine. Uses localStorage so login persists across server restarts.
+// Only prompts again if the stored password becomes invalid.
+const MH_KEY = 'mh_pw_token';
+
 (async () => {
     try {
         const cfgRes = await fetch('/api/config');
-        if (!cfgRes.ok) return;
-        const cfgData = await cfgRes.json();
+        if (!cfgRes.ok) return; // server error — let dashboard load
 
-        // webuiPassword is redacted as '********' when set — treat that as "password exists"
+        const cfgData = await cfgRes.json();
+        // webuiPassword is redacted to '********' when set
         const hasPassword = cfgData?.config?.webuiPassword &&
                             cfgData.config.webuiPassword !== '';
+
         if (!hasPassword) {
+            // No password configured — mark visited so setup doesn't show again
+            if (!localStorage.getItem(MH_KEY)) {
+                localStorage.setItem(MH_KEY, '__no_password__');
+            }
             window.__mhPassword = null;
             return;
         }
 
-        const storedPw = sessionStorage.getItem('mh_auth');
-        if (!storedPw || storedPw === 'no-password') {
-            window.location.href = '/login.html';
+        // Password is set — check localStorage for saved token
+        const stored = localStorage.getItem(MH_KEY);
+        if (!stored || stored === '__no_password__') {
+            window.location.replace('/login.html');
             return;
         }
 
-        // Validate stored password
+        // Validate the stored password is still correct
         const testRes = await fetch('/api/accounts', {
-            headers: { 'x-webui-password': storedPw }
+            headers: { 'x-webui-password': stored }
         });
-        if (!testRes.ok) {
-            sessionStorage.removeItem('mh_auth');
-            window.location.href = '/login.html';
-            return;
+
+        if (testRes.ok) {
+            // Valid — set global password for all API calls
+            window.__mhPassword = stored;
+        } else {
+            // Wrong password (changed server-side) — force re-login
+            localStorage.removeItem(MH_KEY);
+            window.location.replace('/login.html');
         }
-        window.__mhPassword = storedPw;
     } catch {
-        // Allow through on network error
+        // Network error — allow through, dashboard will show connection error
     }
 })();
 
-// Inject password header automatically into all internal API calls
+// Inject password header into all internal fetch calls automatically
 const _origFetch = window.fetch;
-window.fetch = function(url, opts = {}) {
-    if (window.__mhPassword && typeof url === 'string' &&
-        !url.startsWith('https://') && !url.startsWith('http://') || 
-        (typeof url === 'string' && (url.startsWith('/api') || url.startsWith('views/')))) {
-        opts = opts || {};
-        opts.headers = opts.headers || {};
-        if (!(opts.headers instanceof Headers)) {
-            opts.headers['x-webui-password'] = window.__mhPassword;
+window.fetch = function(url, opts) {
+    opts = opts || {};
+    if (window.__mhPassword && typeof url === 'string') {
+        const isInternal = !url.startsWith('http://') && !url.startsWith('https://');
+        const isCDN = url.includes('cdn.jsdelivr') || url.includes('cdnjs');
+        if (isInternal && !isCDN) {
+            opts.headers = opts.headers || {};
+            if (!(opts.headers instanceof Headers)) {
+                opts.headers['x-webui-password'] = window.__mhPassword;
+            }
         }
     }
     return _origFetch(url, opts);
 };
 // ────────────────────────────────────────────────────────────────────────────
 
-
 document.addEventListener('alpine:init', () => {
-    // Register Components (loaded from separate files via window.Components)
     Alpine.data('dashboard', window.Components.dashboard);
     Alpine.data('models', window.Components.models);
     Alpine.data('ollamaHub', window.Components.ollamaHub);
@@ -70,7 +79,6 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('logsViewer', window.Components.logsViewer);
     Alpine.data('addAccountModal', window.Components.addAccountModal);
 
-    // View Loader Directive
     Alpine.directive('load-view', (el, { expression }, { evaluate }) => {
         if (!window.viewCache) window.viewCache = new Map();
         const viewName = evaluate(expression);
@@ -80,22 +88,13 @@ document.addEventListener('alpine:init', () => {
             return;
         }
         fetch(`views/${viewName}.html?t=${Date.now()}`)
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response.text();
-            })
-            .then(html => {
-                window.viewCache.set(viewName, html);
-                el.innerHTML = html;
-                Alpine.initTree(el);
-            })
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+            .then(html => { window.viewCache.set(viewName, html); el.innerHTML = html; Alpine.initTree(el); })
             .catch(err => {
-                el.innerHTML = `<div style="padding:16px;border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#fca5a5;font-family:monospace;font-size:12px">
-                    Error loading view: ${viewName}<br><span style="opacity:0.6">${err.message}</span></div>`;
+                el.innerHTML = `<div style="padding:16px;border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#fca5a5;font-family:monospace;font-size:12px">Error loading view: ${viewName}<br><span style="opacity:0.6">${err.message}</span></div>`;
             });
     });
 
-    // Main App Controller
     Alpine.data('app', () => ({
         get connectionStatus() { return Alpine.store('data')?.connectionStatus || 'connecting'; },
         get loading() { return Alpine.store('data')?.loading || false; },
@@ -108,8 +107,7 @@ document.addEventListener('alpine:init', () => {
             window.addEventListener('resize', () => {
                 if (resizeTimeout) clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(() => {
-                    const cur = window.innerWidth;
-                    const lg = 1024;
+                    const cur = window.innerWidth, lg = 1024;
                     if (lastWidth >= lg && cur < lg) this.sidebarOpen = false;
                     if (lastWidth < lg && cur >= lg) this.sidebarOpen = true;
                     lastWidth = cur;
@@ -148,48 +146,36 @@ document.addEventListener('alpine:init', () => {
                 const { response, newPassword } = await window.utils.request(urlPath, {}, password);
                 if (newPassword) Alpine.store('global').webuiPassword = newPassword;
                 const data = await response.json();
-
                 if (data.status === 'ok') {
                     Alpine.store('global').showToast(Alpine.store('global').t('oauthInProgress'), 'info');
                     const oauthWindow = window.open(data.url, 'google_oauth', 'width=600,height=700,scrollbars=yes');
-                    const initialAccountCount = Alpine.store('data').accounts.length;
-                    let pollCount = 0;
-                    const maxPolls = 60;
-                    let cancelled = false;
-
+                    const initialCount = Alpine.store('data').accounts.length;
+                    let polls = 0; const maxPolls = 60; let cancelled = false;
                     Alpine.store('global').oauthProgress = {
                         active: true, current: 0, max: maxPolls,
                         cancel: () => {
-                            cancelled = true;
-                            clearInterval(pollInterval);
+                            cancelled = true; clearInterval(pi);
                             Alpine.store('global').oauthProgress.active = false;
                             Alpine.store('global').showToast(Alpine.store('global').t('oauthCancelled'), 'info');
                             if (oauthWindow && !oauthWindow.closed) oauthWindow.close();
                         }
                     };
-
-                    const pollInterval = setInterval(async () => {
-                        if (cancelled) { clearInterval(pollInterval); return; }
-                        pollCount++;
-                        Alpine.store('global').oauthProgress.current = pollCount;
-                        if (oauthWindow && oauthWindow.closed && !cancelled) {
-                            clearInterval(pollInterval);
-                            Alpine.store('global').oauthProgress.active = false;
-                            Alpine.store('global').showToast(Alpine.store('global').t('oauthWindowClosed'), 'warning');
-                            return;
+                    const pi = setInterval(async () => {
+                        if (cancelled) { clearInterval(pi); return; }
+                        polls++; Alpine.store('global').oauthProgress.current = polls;
+                        if (oauthWindow && oauthWindow.closed) {
+                            clearInterval(pi); Alpine.store('global').oauthProgress.active = false;
+                            Alpine.store('global').showToast(Alpine.store('global').t('oauthWindowClosed'), 'warning'); return;
                         }
                         await Alpine.store('data').fetchData();
-                        if (Alpine.store('data').accounts.length > initialAccountCount) {
-                            clearInterval(pollInterval);
-                            Alpine.store('global').oauthProgress.active = false;
-                            const actionKey = reAuthEmail ? 'accountReauthSuccess' : 'accountAddedSuccess';
-                            Alpine.store('global').showToast(Alpine.store('global').t(actionKey), 'success');
+                        if (Alpine.store('data').accounts.length > initialCount) {
+                            clearInterval(pi); Alpine.store('global').oauthProgress.active = false;
+                            Alpine.store('global').showToast(Alpine.store('global').t(reAuthEmail ? 'accountReauthSuccess' : 'accountAddedSuccess'), 'success');
                             document.getElementById('add_account_modal')?.close();
                             if (oauthWindow && !oauthWindow.closed) oauthWindow.close();
                         }
-                        if (pollCount >= maxPolls) {
-                            clearInterval(pollInterval);
-                            Alpine.store('global').oauthProgress.active = false;
+                        if (polls >= maxPolls) {
+                            clearInterval(pi); Alpine.store('global').oauthProgress.active = false;
                             Alpine.store('global').showToast(Alpine.store('global').t('oauthTimeout'), 'warning');
                         }
                     }, 2000);

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" id="login-page">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Model Hub — Login</title>
+<title>Model Hub — Setup</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,11 +18,11 @@
   }
   .card {
     width: 100%;
-    max-width: 380px;
+    max-width: 400px;
     background: #0d0d12;
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 16px;
-    padding: 36px 32px;
+    padding: 40px 36px;
     box-shadow: 0 24px 80px rgba(0,0,0,0.6);
     animation: slideUp 0.3s ease;
   }
@@ -31,198 +31,422 @@
     to   { opacity:1; transform: translateY(0); }
   }
   .logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 28px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
   }
-  .logo img { width: 52px; height: 52px; }
+  .logo img { width: 56px; height: 56px; }
   .title {
-    font-size: 22px;
-    font-weight: 700;
-    color: #f1f5f9;
-    text-align: center;
-    letter-spacing: -0.03em;
-    margin-bottom: 4px;
+    font-size: 22px; font-weight: 700; color: #f1f5f9;
+    text-align: center; letter-spacing: -0.03em; margin-bottom: 4px;
   }
   .subtitle {
-    font-size: 12px;
-    text-align: center;
-    color: #475569;
-    font-family: 'JetBrains Mono', monospace;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 28px;
+    font-size: 11px; text-align: center; color: #475569;
+    font-family: monospace; text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 32px;
+  }
+  /* Screen switching */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Setup notice */
+  .setup-notice {
+    padding: 12px 14px; border-radius: 8px;
+    background: rgba(99,102,241,0.08);
+    border: 1px solid rgba(99,102,241,0.2);
+    color: #a5b4fc; font-size: 12px; line-height: 1.6;
+    margin-bottom: 24px;
   }
   label {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: #475569;
-    margin-bottom: 6px;
+    display: block; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: #475569; margin-bottom: 6px;
   }
+  .field-group { margin-bottom: 16px; }
   .input-wrap { position: relative; }
   input[type="password"], input[type="text"] {
-    width: 100%;
-    padding: 10px 40px 10px 12px;
-    border-radius: 8px;
-    background: #13131a;
+    width: 100%; padding: 10px 40px 10px 12px;
+    border-radius: 8px; background: #13131a;
     border: 1px solid rgba(255,255,255,0.08);
-    color: #f1f5f9;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    outline: none;
+    color: #f1f5f9; font-family: monospace;
+    font-size: 13px; outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   input:focus {
     border-color: rgba(99,102,241,0.6);
     box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
   }
-  .toggle-eye {
-    position: absolute;
-    right: 10px; top: 50%;
+  input::placeholder { color: #334155; }
+  .eye-btn {
+    position: absolute; right: 10px; top: 50%;
     transform: translateY(-50%);
-    cursor: pointer;
-    color: #475569;
-    background: none; border: none;
-    padding: 4px;
-    transition: color 0.15s;
+    cursor: pointer; color: #475569;
+    background: none; border: none; padding: 4px;
   }
-  .toggle-eye:hover { color: #94a3b8; }
+  .eye-btn:hover { color: #94a3b8; }
+  .hint { font-size: 11px; color: #334155; margin-top: 5px; }
   .btn {
-    width: 100%;
-    margin-top: 20px;
-    padding: 11px;
-    border-radius: 8px;
-    background: #6366f1;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: background 0.15s, box-shadow 0.15s;
-    letter-spacing: 0.01em;
+    width: 100%; padding: 11px; border-radius: 8px;
+    background: #6366f1; color: #fff;
+    font-size: 13px; font-weight: 600; border: none;
+    cursor: pointer; transition: background 0.15s, box-shadow 0.15s;
+    margin-top: 8px;
   }
   .btn:hover { background: #4f46e5; box-shadow: 0 0 0 3px rgba(99,102,241,0.25); }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .error {
-    margin-top: 14px;
-    padding: 10px 12px;
-    border-radius: 7px;
-    background: rgba(239,68,68,0.08);
-    border: 1px solid rgba(239,68,68,0.25);
-    color: #fca5a5;
-    font-size: 12px;
-    display: none;
+  .btn-ghost {
+    background: transparent; border: 1px solid rgba(255,255,255,0.08);
+    color: #64748b;
   }
-  .footer {
-    margin-top: 24px;
-    text-align: center;
-    font-size: 11px;
-    color: #334155;
-    font-family: 'JetBrains Mono', monospace;
+  .btn-ghost:hover { background: rgba(255,255,255,0.04); box-shadow: none; color: #94a3b8; }
+  .msg {
+    margin-top: 14px; padding: 10px 12px; border-radius: 7px;
+    font-size: 12px; display: none;
   }
+  .msg.error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
+  .msg.success { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); color: #6ee7b7; }
+  .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 20px 0; }
+  .skip-link {
+    display: block; text-align: center; margin-top: 14px;
+    font-size: 12px; color: #334155; cursor: pointer;
+    transition: color 0.15s;
+  }
+  .skip-link:hover { color: #64748b; }
+  .footer { margin-top: 28px; text-align: center; font-size: 10px; color: #1e293b; font-family: monospace; }
+  .strength-bar {
+    height: 3px; border-radius: 9px; margin-top: 6px;
+    background: #1a1a23; overflow: hidden;
+  }
+  .strength-fill { height: 100%; border-radius: 9px; transition: width 0.3s, background 0.3s; width: 0%; }
 </style>
 </head>
 <body>
+
 <div class="card">
-  <div class="logo">
-    <img src="images/logo.svg" alt="Model Hub">
-  </div>
+  <div class="logo"><img src="images/logo.svg" alt="Model Hub"></div>
   <div class="title">Model Hub</div>
-  <div class="subtitle">Enter password to continue</div>
+  <div class="subtitle" id="page-subtitle">Console</div>
 
-  <label for="password">Password</label>
-  <div class="input-wrap">
-    <input type="password" id="password" placeholder="••••••••" autofocus autocomplete="current-password">
-    <button class="toggle-eye" onclick="togglePw()" type="button" tabindex="-1">
-      <svg id="eye-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-      </svg>
-    </button>
+  <!-- ═══════════════ SETUP SCREEN ═══════════════ -->
+  <div class="screen active" id="screen-setup">
+    <div class="setup-notice">
+      🔐 <strong style="color:#c7d2fe">First-time setup</strong><br>
+      Create a password to protect your Model Hub dashboard. Leave blank to skip password protection.
+    </div>
+
+    <div class="field-group">
+      <label>Create Password</label>
+      <div class="input-wrap">
+        <input type="password" id="setup-pw1" placeholder="Enter a password" autocomplete="new-password"
+               oninput="checkStrength(this.value)">
+        <button class="eye-btn" onclick="toggleEye('setup-pw1','eye1')" type="button" tabindex="-1">
+          <svg id="eye1" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+      <div class="hint" id="strength-label"></div>
+    </div>
+
+    <div class="field-group">
+      <label>Confirm Password</label>
+      <div class="input-wrap">
+        <input type="password" id="setup-pw2" placeholder="Repeat password" autocomplete="new-password">
+        <button class="eye-btn" onclick="toggleEye('setup-pw2','eye2')" type="button" tabindex="-1">
+          <svg id="eye2" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="msg error" id="setup-msg"></div>
+    <button class="btn" id="setup-btn" onclick="doSetup()">Save Password & Continue</button>
+    <span class="skip-link" onclick="skipSetup()">Skip — no password protection</span>
   </div>
 
-  <div class="error" id="error-msg">Incorrect password. Please try again.</div>
+  <!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
+  <div class="screen" id="screen-login">
+    <div class="field-group">
+      <label>Password</label>
+      <div class="input-wrap">
+        <input type="password" id="login-pw" placeholder="••••••••" autocomplete="current-password">
+        <button class="eye-btn" onclick="toggleEye('login-pw','eye3')" type="button" tabindex="-1">
+          <svg id="eye3" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="msg error" id="login-msg">Incorrect password. Please try again.</div>
+    <button class="btn" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="divider"></div>
+    <button class="btn btn-ghost" onclick="showChangePassword()">Change Password</button>
+  </div>
 
-  <button class="btn" id="login-btn" onclick="doLogin()">Sign In</button>
+  <!-- ═══════════════ CHANGE PASSWORD SCREEN ═══════════════ -->
+  <div class="screen" id="screen-change">
+    <div class="field-group">
+      <label>Current Password</label>
+      <div class="input-wrap">
+        <input type="password" id="change-old" placeholder="Current password">
+      </div>
+    </div>
+    <div class="field-group">
+      <label>New Password</label>
+      <div class="input-wrap">
+        <input type="password" id="change-new1" placeholder="New password" oninput="checkStrength2(this.value)">
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="strength-fill2"></div></div>
+    </div>
+    <div class="field-group">
+      <label>Confirm New Password</label>
+      <div class="input-wrap">
+        <input type="password" id="change-new2" placeholder="Repeat new password">
+      </div>
+    </div>
+    <div class="msg error" id="change-msg"></div>
+    <div class="msg success" id="change-ok">Password changed! Redirecting...</div>
+    <button class="btn" id="change-btn" onclick="doChange()">Update Password</button>
+    <span class="skip-link" onclick="showLogin()">← Back to login</span>
+  </div>
 
-  <div class="footer">Model Hub Console</div>
+  <div class="footer">MODEL HUB CONSOLE</div>
 </div>
 
 <script>
-  // If no password is set, skip login entirely
-  fetch('/api/config').then(r => r.json()).then(data => {
-    const hasPassword = data?.config?.webuiPassword && data.config.webuiPassword !== '';
-    if (!hasPassword || data.config.webuiPassword === '********') {
-      // Password is set (redacted means it exists), show login
-      // No password set — go straight to dashboard
-      if (!hasPassword) {
-        sessionStorage.setItem('mh_auth', 'no-password');
-        window.location.href = '/dashboard.html';
-      }
-    }
-  }).catch(() => {});
+const STORAGE_KEY = 'mh_pw_token';
 
-  // Check if already authenticated this session
-  if (sessionStorage.getItem('mh_auth')) {
-    window.location.href = '/dashboard.html';
-  }
+// ── Utilities ──────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+function showLogin() {
+  document.getElementById('page-subtitle').textContent = 'Enter password to continue';
+  showScreen('login');
+  setTimeout(() => document.getElementById('login-pw').focus(), 100);
+}
+function showSetup() {
+  document.getElementById('page-subtitle').textContent = 'First-time setup';
+  showScreen('setup');
+  setTimeout(() => document.getElementById('setup-pw1').focus(), 100);
+}
+function showChangePassword() {
+  document.getElementById('page-subtitle').textContent = 'Change password';
+  showScreen('change');
+  setTimeout(() => document.getElementById('change-old').focus(), 100);
+}
+function setMsg(id, text, type) {
+  const el = document.getElementById(id);
+  if (text) { el.textContent = text; el.style.display = 'block'; el.className = 'msg ' + type; }
+  else { el.style.display = 'none'; }
+}
 
-  function togglePw() {
-    const inp = document.getElementById('password');
-    const icon = document.getElementById('eye-icon');
-    if (inp.type === 'password') {
-      inp.type = 'text';
-      icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 4.411m0 0L21 21"/>';
-    } else {
-      inp.type = 'password';
-      icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
-    }
-  }
+function toggleEye(inputId, eyeId) {
+  const inp = document.getElementById(inputId);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
 
-  document.getElementById('password').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin();
-  });
+function strengthScore(pw) {
+  if (!pw) return 0;
+  let s = 0;
+  if (pw.length >= 6) s++;
+  if (pw.length >= 10) s++;
+  if (/[A-Z]/.test(pw)) s++;
+  if (/[0-9]/.test(pw)) s++;
+  if (/[^A-Za-z0-9]/.test(pw)) s++;
+  return s;
+}
 
-  async function doLogin() {
-    const pw = document.getElementById('password').value;
-    const btn = document.getElementById('login-btn');
-    const err = document.getElementById('error-msg');
-    if (!pw) return;
+function applyStrength(fillId, score) {
+  const fill = document.getElementById(fillId);
+  const pct = [0, 20, 40, 65, 85, 100][score];
+  const color = ['', '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#10b981'][score];
+  fill.style.width = pct + '%';
+  fill.style.background = color;
+}
 
-    btn.disabled = true;
-    btn.textContent = 'Signing in...';
-    err.style.display = 'none';
+function checkStrength(pw) {
+  const score = strengthScore(pw);
+  applyStrength('strength-fill', score);
+  const labels = ['', 'Too short', 'Weak', 'Fair', 'Good', 'Strong'];
+  const el = document.getElementById('strength-label');
+  el.textContent = pw ? labels[score] : '';
+}
+function checkStrength2(pw) { applyStrength('strength-fill2', strengthScore(pw)); }
 
-    try {
-      const res = await fetch('/api/accounts', {
-        headers: { 'x-webui-password': pw }
+// Enter key handlers
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const active = document.querySelector('.screen.active')?.id;
+  if (active === 'screen-login') doLogin();
+  else if (active === 'screen-setup') doSetup();
+  else if (active === 'screen-change') doChange();
+});
+
+// ── Setup (first run) ──────────────────────────────────────────────────────
+async function doSetup() {
+  const pw1 = document.getElementById('setup-pw1').value;
+  const pw2 = document.getElementById('setup-pw2').value;
+  setMsg('setup-msg', '', 'error');
+
+  if (pw1 !== pw2) return setMsg('setup-msg', 'Passwords do not match.', 'error');
+  if (pw1 && pw1.length < 4) return setMsg('setup-msg', 'Password must be at least 4 characters.', 'error');
+
+  const btn = document.getElementById('setup-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  try {
+    if (pw1) {
+      // Save password via API
+      const res = await fetch('/api/config/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPassword: '', newPassword: pw1 })
       });
-
-      if (res.ok) {
-        sessionStorage.setItem('mh_auth', pw);
-        window.location.href = '/dashboard.html';
-      } else if (res.status === 401) {
-        err.style.display = 'block';
-        document.getElementById('password').value = '';
-        document.getElementById('password').focus();
-      } else {
-        err.textContent = 'Server error. Is Model Hub running?';
-        err.style.display = 'block';
+      if (!res.ok) {
+        const d = await res.json();
+        return setMsg('setup-msg', d.error || 'Failed to save password.', 'error');
       }
-    } catch {
-      err.textContent = 'Cannot connect to Model Hub.';
-      err.style.display = 'block';
+      localStorage.setItem(STORAGE_KEY, pw1);
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    window.location.href = '/index.html';
+  } catch {
+    setMsg('setup-msg', 'Cannot connect to server. Is Model Hub running?', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Password & Continue';
+  }
+}
+
+async function skipSetup() {
+  localStorage.removeItem(STORAGE_KEY);
+  window.location.href = '/index.html';
+}
+
+// ── Login ──────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const pw = document.getElementById('login-pw').value;
+  const btn = document.getElementById('login-btn');
+  setMsg('login-msg', '', 'error');
+  if (!pw) return;
+
+  btn.disabled = true; btn.textContent = 'Signing in...';
+
+  try {
+    const res = await fetch('/api/accounts', {
+      headers: { 'x-webui-password': pw }
+    });
+    if (res.ok) {
+      localStorage.setItem(STORAGE_KEY, pw);
+      window.location.href = '/index.html';
+    } else if (res.status === 401) {
+      setMsg('login-msg', 'Incorrect password. Please try again.', 'error');
+      document.getElementById('login-pw').value = '';
+      document.getElementById('login-pw').focus();
+    } else {
+      setMsg('login-msg', 'Server error. Is Model Hub running?', 'error');
+    }
+  } catch {
+    setMsg('login-msg', 'Cannot connect to Model Hub server.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+
+// ── Change Password ────────────────────────────────────────────────────────
+async function doChange() {
+  const oldPw = document.getElementById('change-old').value;
+  const pw1   = document.getElementById('change-new1').value;
+  const pw2   = document.getElementById('change-new2').value;
+  setMsg('change-msg', '', 'error');
+  setMsg('change-ok', '', 'success');
+
+  if (!oldPw) return setMsg('change-msg', 'Enter your current password.', 'error');
+  if (!pw1)   return setMsg('change-msg', 'Enter a new password.', 'error');
+  if (pw1 !== pw2) return setMsg('change-msg', 'New passwords do not match.', 'error');
+  if (pw1.length < 4) return setMsg('change-msg', 'Password must be at least 4 characters.', 'error');
+
+  const btn = document.getElementById('change-btn');
+  btn.disabled = true; btn.textContent = 'Updating...';
+
+  try {
+    const res = await fetch('/api/config/password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-webui-password': oldPw
+      },
+      body: JSON.stringify({ oldPassword: oldPw, newPassword: pw1 })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem(STORAGE_KEY, pw1);
+      setMsg('change-ok', 'Password changed! Redirecting...', 'success');
+      setTimeout(() => window.location.href = '/index.html', 1500);
+    } else {
+      setMsg('change-msg', data.error || 'Failed to update password.', 'error');
+    }
+  } catch {
+    setMsg('change-msg', 'Cannot connect to server.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Update Password';
+  }
+}
+
+// ── Startup logic ──────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const cfgRes = await fetch('/api/config');
+    const cfg = await cfgRes.json();
+    const hasPassword = cfg?.config?.webuiPassword && cfg.config.webuiPassword !== '';
+
+    if (!hasPassword) {
+      // Check if this is truly first-run (no stored token AND no password set)
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) {
+        // First time ever — show setup
+        showSetup();
+      } else {
+        // User skipped password before — go straight in
+        window.location.href = '/index.html';
+      }
+      return;
     }
 
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
+    // Password is set — check if we have a valid stored token
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      // Validate stored password silently
+      const testRes = await fetch('/api/accounts', {
+        headers: { 'x-webui-password': stored }
+      });
+      if (testRes.ok) {
+        // Still valid — go straight to dashboard
+        window.location.href = '/index.html';
+        return;
+      }
+      // Token expired or wrong — clear it and show login
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
+    // Show login screen
+    document.getElementById('page-subtitle').textContent = 'Enter password to continue';
+    showScreen('login');
+    setTimeout(() => document.getElementById('login-pw').focus(), 100);
+
+  } catch {
+    // Server not reachable — show login anyway
+    showScreen('login');
   }
+}
+
+init();
 </script>
 </body>
 </html>
