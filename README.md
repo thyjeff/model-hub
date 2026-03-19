@@ -1,207 +1,228 @@
+<div align="center">
+
+<img src="images/modelhub.png" alt="Model Hub" width="120" />
+
 # Model Hub
 
-> A unified AI model gateway — run Claude, Gemini, Ollama, OpenAI, and Kimi models through a single Anthropic-compatible API, with multi-account load balancing, quota tracking, and a web dashboard.
+**Unified AI model gateway — Claude, Gemini, Ollama, OpenAI, Kimi through one API**
 
-![Node.js](https://img.shields.io/badge/Node.js-18%2B-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![npm](https://img.shields.io/npm/v/model-hub-proxy)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/thyjeff/model-hub?style=social)](https://github.com/thyjeff/model-hub)
+[![Works on Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white)](https://github.com/thyjeff/model-hub)
+[![Works on Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)](https://github.com/thyjeff/model-hub)
+[![Works on macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white)](https://github.com/thyjeff/model-hub)
+
+</div>
 
 ---
 
-## Quick Start — 3 commands
+<div align="center">
+<img src="images/dashboard.png" alt="Model Hub Dashboard" width="100%" />
+</div>
 
-### Linux / macOS
+---
+
+## ⚡ Quick Start — 3 commands
+
+Works identically on **Windows**, **Linux**, and **macOS**.
+
 ```bash
-git clone https://github.com/badri-s2001/model-hub-proxy.git
-cd model-hub-proxy
+git clone https://github.com/thyjeff/model-hub.git
+cd model-hub
 npm install && npm start
 ```
 
-### Windows
-```cmd
-git clone https://github.com/badri-s2001/model-hub-proxy.git
-cd model-hub-proxy
-npm install && npm start
-```
+Then open **http://localhost:8080** in your browser — the dashboard walks you through the rest.
 
-Then open **http://localhost:8080** — the web dashboard guides you through adding accounts.
+> **Requires:** [Node.js 18+](https://nodejs.org) and [Git](https://git-scm.com)
 
 ---
 
-## What is it?
+## What is Model Hub?
 
 ```
-Claude Code CLI  →  Model Hub (this)  →  Google Cloud Code API (Gemini/Claude)
-                                      →  Ollama (local models)
-                                      →  OpenAI API
-                                      →  Kimi API
+Your AI Client  →  Model Hub  →  Google Cloud Code (Claude + Gemini, free)
+  (Claude Code,                →  Ollama           (local models)
+   Cursor, etc.)               →  OpenAI API
+                               →  Kimi API
 ```
 
-Model Hub sits in front of any AI provider and exposes a single **Anthropic-compatible API** on `localhost:8080`. Point Claude Code, Cursor, or any OpenAI-compatible client at it and get:
+Model Hub exposes a single **Anthropic-compatible API** on `localhost:8080`. Any tool that talks to Claude works instantly — no code changes needed.
 
-- **Free Gemini & Claude models** via Google Cloud Code (requires Google account)
-- **Multi-account rotation** — add multiple Google accounts, quotas rotate automatically
-- **Ollama passthrough** — local models via `ollama/model-name`
-- **OpenAI & Kimi support** — use `openai/gpt-4o` or `kimi/kimi-k2` as model names
-- **Web dashboard** — live quota bars, usage charts, account health, log streaming
+**Key features:**
+- 🆓 **Free Claude & Gemini** via Google Cloud Code (just needs a Google account)
+- 🔄 **Multi-account rotation** — add multiple Google accounts, quotas auto-rotate
+- 📊 **Web dashboard** — live quota bars, usage charts, account health, real-time logs
+- 🦙 **Ollama passthrough** — use local models via `ollama/model-name`
+- 🔑 **OpenAI & Kimi** — use `openai/gpt-4o`, `kimi/kimi-k2` as drop-in models
+- ⚖️ **Smart load balancing** — hybrid health/quota/LRU strategy across accounts
 
 ---
 
-## Prerequisites
+## 🔌 Connect Claude Code CLI
 
-- **Node.js 18+** — [nodejs.org](https://nodejs.org)
-- **Git** — [git-scm.com](https://git-scm.com)
-- A **Google account** (free tier works) — or just use Ollama for fully local models
-
----
-
-## Installation
-
-### Option 1: Clone (recommended)
-
-```bash
-# Clone
-git clone https://github.com/badri-s2001/model-hub-proxy.git
-cd model-hub-proxy
-
-# Install dependencies (also builds CSS)
-npm install
-
-# Start
-npm start
-```
-
-### Option 2: npx (no install)
-
-```bash
-npx model-hub-proxy@latest start
-```
-
-### Option 3: Global install
-
-```bash
-npm install -g model-hub-proxy
-model-hub-proxy start
-```
-
----
-
-## Add your first account
-
-After `npm start`, open **http://localhost:8080** → **Accounts** tab → **Add Account** → sign in with Google.
-
-**Headless / no browser?**
-
-```bash
-npm run accounts:add -- --no-browser
-```
-
----
-
-## Connect Claude Code CLI
-
-Create or edit `~/.claude/settings.json` (Windows: `%USERPROFILE%\.claude\settings.json`):
+Create or edit `~/.claude/settings.json`  
+(Windows: `%USERPROFILE%\.claude\settings.json`):
 
 ```json
 {
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "any-value",
     "ANTHROPIC_BASE_URL": "http://localhost:8080",
-    "ANTHROPIC_MODEL": "claude-opus-4-6-thinking"
+    "ANTHROPIC_MODEL": "claude-sonnet-4-5-thinking",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4-6-thinking",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-5-thinking",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-sonnet-4-5"
   }
 }
 ```
 
-Then just run `claude` — it routes through Model Hub automatically.
+Then run `claude` — requests route through Model Hub automatically.
+
+> **Note:** `ANTHROPIC_AUTH_TOKEN` can be any non-empty string — Model Hub handles real auth via Google OAuth.
 
 ---
 
-## Available Models
+## 📦 Available Models
 
 | Prefix | Example | Backend |
 |--------|---------|---------|
-| _(none)_ | `claude-sonnet-4-5-thinking` | Google Cloud Code |
-| _(none)_ | `gemini-3.1-pro-high` | Google Cloud Code |
-| `ollama/` | `ollama/llama3.2` | Local Ollama |
-| `openai/` | `openai/gpt-4o` | OpenAI API |
-| `kimi/` | `kimi/kimi-k2` | Kimi API |
+| _(none)_ | `claude-sonnet-4-5-thinking` | Google Cloud Code (free) |
+| _(none)_ | `gemini-3.1-pro-high` | Google Cloud Code (free) |
+| `ollama/` | `ollama/llama3.2` | Local Ollama instance |
+| `openai/` | `openai/gpt-4o` | OpenAI API (key required) |
+| `kimi/` | `kimi/kimi-k2` | Kimi API (key required) |
 
-Run `curl http://localhost:8080/v1/models` for the full live list.
+```bash
+# See all available models live
+curl http://localhost:8080/v1/models
+```
 
 ---
 
-## Configuration
+## 👤 Add Google Account
 
-Copy `config.example.json` to `~/.config/modelhub-proxy/config.json` and edit:
+After `npm start`, go to **http://localhost:8080** → **Accounts** → **Add Account** → sign in with Google.
+
+**No browser / headless server?**
+```bash
+npm run accounts:add -- --no-browser
+```
+
+Add multiple accounts for higher combined quota — Model Hub rotates between them automatically.
+
+---
+
+## ⚙️ Configuration
+
+Copy `config.example.json` to `~/.config/modelhub-proxy/config.json`:
 
 ```json
 {
   "port": 8080,
-  "apiKey": "optional-auth-key",
+  "apiKey": "",
   "ollamaBaseUrl": "http://127.0.0.1:11434",
-  "openaiApiKeys": ["sk-..."],
-  "kimiApiKeys": ["your-key"]
+  "openaiApiKeys": [],
+  "kimiApiKeys": []
 }
 ```
 
-Or use environment variables:
+Or use environment variables (create a `.env` file in the project root):
 
 | Variable | Description |
 |----------|-------------|
-| `PORT` | Server port (default: 8080) |
-| `API_KEY` | Protect the proxy with an API key |
+| `PORT` | Server port (default: `8080`) |
+| `API_KEY` | Optional: password-protect the proxy |
 | `OLLAMA_BASE_URL` | Ollama endpoint |
-| `OLLAMA_BASE_URLS` | Comma-separated pool of Ollama endpoints |
-| `OPENAI_API_KEYS` | Comma-separated OpenAI keys |
-| `OPENAI_BASE_URL` | OpenAI-compatible base URL |
-| `KIMI_API_KEYS` | Comma-separated Kimi keys |
-| `GOOGLE_CLIENT_SECRET` | OAuth client secret (optional override) |
+| `OLLAMA_BASE_URLS` | Comma-separated Ollama pool for failover |
+| `OPENAI_API_KEYS` | Comma-separated OpenAI API keys |
+| `OPENAI_BASE_URL` | Custom OpenAI-compatible base URL |
+| `KIMI_API_KEYS` | Comma-separated Kimi API keys |
+| `GOOGLE_CLIENT_ID` | Custom Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Custom Google OAuth client secret |
 
 ---
 
-## Account Selection Strategies
-
-Pass `--strategy` to control how accounts are chosen:
+## 🎛️ Account Strategies
 
 ```bash
-npm start -- --strategy=hybrid      # Smart (default) — health + quota + LRU
-npm start -- --strategy=sticky      # Stay on one account (best for prompt cache)
-npm start -- --strategy=round-robin # Rotate every request (max throughput)
+npm start -- --strategy=hybrid       # Default: smart health + quota + LRU
+npm start -- --strategy=sticky       # Best for prompt caching (stay on one account)
+npm start -- --strategy=round-robin  # Max throughput (rotate every request)
+npm start -- --fallback              # Auto-fallback to alternate model when quota hits
 ```
 
 ---
 
-## Key Endpoints
+## 🔑 API Endpoints
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /health` | Account pool status |
-| `GET /account-limits` | Per-account quota table |
-| `GET /account-limits?format=table` | ASCII table |
+| `GET  /health` | Account pool status |
+| `GET  /account-limits` | Per-account quota (JSON) |
+| `GET  /account-limits?format=table` | Per-account quota (ASCII table) |
 | `POST /v1/messages` | Anthropic Messages API |
-| `POST /v1/chat/completions` | OpenAI Chat API |
-| `GET /v1/models` | List all available models |
+| `POST /v1/chat/completions` | OpenAI Chat Completions API |
+| `POST /v1/responses` | OpenAI Responses API |
+| `GET  /v1/models` | List all available models |
 
 ---
 
-## Troubleshooting
+## 🔒 Security
 
-**"No accounts available"** — Add a Google account via the web dashboard or `npm run accounts:add`
-
-**Port already in use** — `PORT=3001 npm start`
-
-**Claude Code asks for login** — Add `"hasCompletedOnboarding": true` to `~/.claude.json`
-
-**Windows: native module error** — Run `npm rebuild` then `npm start`
+- **No API keys are hardcoded** — all credentials load from environment variables or your local `config.json` (which is never committed)
+- **`.env` is gitignored** — secrets stay on your machine
+- **OAuth tokens** are stored only in `~/.config/modelhub-proxy/accounts.json` on your local machine
+- **`ANTHROPIC_AUTH_TOKEN`** in Claude Code settings can be any placeholder string — Model Hub handles real Google OAuth
 
 ---
 
-## Credits
+## 🛠️ Troubleshooting
 
-Built on top of:
-- [opencode-antigravity-auth](https://github.com/NoeFabris/opencode-antigravity-auth) — Google Cloud Code OAuth
-- [claude-code-proxy](https://github.com/1rgs/claude-code-proxy) — Original proxy concept
+**"No accounts available"**
+→ Open http://localhost:8080 → Accounts → Add Account
+
+**Port already in use**
+→ `PORT=3001 npm start`
+
+**Claude Code asks for login**
+→ Add `"hasCompletedOnboarding": true` to `~/.claude.json` and restart terminal
+
+**Windows: native module error (`better-sqlite3`)**
+→ `npm rebuild` then `npm start`
+
+**npm package not found (`model-hub-proxy`)**
+→ The package is not on npm — use the git clone method above instead:
+```bash
+git clone https://github.com/thyjeff/model-hub.git && cd model-hub && npm install && npm start
+```
 
 ---
 
-## License
+## 🏗️ Architecture
+
+```
+src/
+├── server.js              Express server — /v1/messages, /v1/models, /health
+├── cloudcode/             Google Cloud Code API client (Claude + Gemini)
+├── account-manager/       Multi-account pool with strategies
+│   └── strategies/        sticky | round-robin | hybrid
+├── ollama/                Ollama + OpenAI-compatible passthrough
+├── auth/                  Google OAuth flow
+├── format/                Anthropic ↔ Google format conversion
+└── webui/                 Web dashboard backend
+```
+
+---
+
+## 📄 License
 
 MIT — see [LICENSE](LICENSE)
+
+---
+
+<div align="center">
+<strong>Model Hub</strong> — One gateway, all models.<br>
+<a href="https://github.com/thyjeff/model-hub/issues">Report a bug</a> · <a href="https://github.com/thyjeff/model-hub/issues">Request a feature</a>
+</div>

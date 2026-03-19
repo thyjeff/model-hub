@@ -1,7 +1,7 @@
 {
   "name": "model-hub-proxy",
   "version": "2.7.7",
-  "description": "Professional model hub gateway for Claude Code and Codex-compatible workflows",
+  "description": "Unified AI model gateway for Claude Code — Claude, Gemini, Ollama, OpenAI via a single Anthropic-compatible API",
   "main": "src/index.js",
   "type": "module",
   "bin": {
@@ -43,17 +43,21 @@
     "anthropic",
     "model-hub",
     "proxy",
-    "vertex-ai"
+    "gemini",
+    "ollama",
+    "openai",
+    "claude-code",
+    "ai-gateway"
   ],
   "author": "Badri Narayanan",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/badri-s2001/model-hub-proxy.git"
+    "url": "git+https://github.com/thyjeff/model-hub.git"
   },
-  "homepage": "https://github.com/badri-s2001/model-hub-proxy#readme",
+  "homepage": "https://github.com/thyjeff/model-hub#readme",
   "bugs": {
-    "url": "https://github.com/badri-s2001/model-hub-proxy/issues"
+    "url": "https://github.com/thyjeff/model-hub/issues"
   },
   "engines": {
     "node": ">=18.0.0"
