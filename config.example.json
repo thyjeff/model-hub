@@ -1,0 +1,81 @@
+{
+  "_comment": "Model Hub Proxy Configuration",
+  "_instructions": [
+    "HOW TO USE THIS FILE:",
+    "1. Copy to your HOME directory: ~/.config/modelhub-proxy/config.json",
+    "   - Windows: C:\\Users\\<username>\\.config\\modelhub-proxy\\config.json",
+    "   - macOS/Linux: ~/.config/modelhub-proxy/config.json",
+    "2. Or copy to project root as 'config.json' (fallback if home config not found)",
+    "",
+    "NOTE: Environment variables (e.g., WEBUI_PASSWORD) take precedence over file config",
+    "Restart server after making changes"
+  ],
+
+  "apiKey": "",
+  "_apiKey_comment": "Optional API key to protect /v1/* endpoints. Can also use API_KEY env var.",
+
+  "webuiPassword": "",
+  "_webuiPassword_comment": "Optional password to protect WebUI. Can also use WEBUI_PASSWORD env var.",
+
+  "port": 8080,
+  "debug": false,
+  "logLevel": "info",
+
+  "maxRetries": 5,
+  "retryBaseMs": 1000,
+  "retryMaxMs": 30000,
+
+  "defaultCooldownMs": 60000,
+  "maxWaitBeforeErrorMs": 120000,
+
+  "tokenCacheTtlMs": 300000,
+  "persistTokenCache": false,
+
+  "requestTimeoutMs": 300000,
+
+  "_ollama_comment": "Optional: configure multiple Ollama upstreams for automatic failover",
+  "ollamaBaseUrl": "http://127.0.0.1:11434",
+  "ollamaBaseUrls": [
+    "http://127.0.0.1:11434"
+  ],
+  "ollamaCloudBaseUrl": "https://your-openai-compatible-ollama-endpoint/v1",
+  "ollamaApiKeys": [
+    "your_api_key_1",
+    "your_api_key_2"
+  ],
+  "openaiBaseUrl": "https://api.openai.com/v1",
+  "openaiApiKeys": [
+    "your_openai_key"
+  ],
+  "kimiBaseUrl": "https://api.moonshot.cn/v1",
+  "kimiApiKeys": [
+    "your_kimi_key"
+  ],
+  "ollamaFailoverCooldownMs": 30000,
+
+  "maxAccounts": 10,
+  "_maxAccounts_comment": "Maximum number of Google accounts allowed (1-100). Default: 10.",
+
+  "_oauthCallbackPort_comment": "OAuth callback server port. Change if you get EACCES errors on Windows. Can also use OAUTH_CALLBACK_PORT env var. Default: 51121.",
+  "_oauthCallbackPort_env": "OAUTH_CALLBACK_PORT=3456",
+
+  "_profiles": {
+    "development": {
+      "debug": true,
+      "logLevel": "debug",
+      "maxRetries": 3
+    },
+    "production": {
+      "debug": false,
+      "logLevel": "info",
+      "maxRetries": 5,
+      "persistTokenCache": true
+    },
+    "high-performance": {
+      "maxRetries": 10,
+      "retryMaxMs": 60000,
+      "tokenCacheTtlMs": 600000
+    }
+  }
+}
+

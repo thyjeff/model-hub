@@ -1,0 +1,132 @@
+<div x-data="ollamaHub" class="view-container">
+    <div class="flex items-center justify-between gap-4 mb-6">
+        <h1 class="text-2xl font-bold text-white tracking-tight">Ollama API Key Hub</h1>
+        <button class="btn btn-sm btn-outline border-space-border text-gray-300 hover:text-white" @click="refreshAll()">
+            Refresh
+        </button>
+    </div>
+
+    <div class="text-xs text-gray-400 mb-4">
+        Last request used:
+        <span class="font-mono text-white" x-text="lastApiKeyDescription()"></span>
+    </div>
+
+    <div x-show="loading" class="text-sm text-gray-400 mb-4">Loading...</div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="view-card space-y-4">
+            <h3 class="text-sm font-semibold text-neon-cyan uppercase tracking-wider">Multi API Key Config (up to 100)</h3>
+            <p class="text-xs text-gray-500">Flow: one request tries key 1 first, then auto-switches to key 2/3 on quota/rate-limit/capacity errors.</p>
+
+            <div>
+                <label class="text-xs uppercase text-gray-500 font-semibold">Cloud Base URL</label>
+                <input type="text" class="input input-sm w-full mt-1 bg-space-800 border-space-border text-white font-mono"
+                    x-model="config.ollamaCloudBaseUrl" placeholder="https://your-openai-compatible-endpoint/v1">
+            </div>
+
+            <div>
+                <label class="text-xs uppercase text-gray-500 font-semibold">API Keys (one per line)</label>
+                <textarea rows="7" class="textarea textarea-sm w-full mt-1 bg-space-800 border-space-border text-white font-mono"
+                    x-model="apiKeysText" placeholder="key_1&#10;key_2&#10;key_3"></textarea>
+            </div>
+
+            <div>
+                <label class="text-xs uppercase text-gray-500 font-semibold">Visible API Keys</label>
+                <div class="mt-1 space-y-2">
+                    <template x-for="(key, idx) in config.ollamaApiKeys" :key="idx">
+                        <div
+                            class="flex items-center justify-between gap-3 px-3 py-1 rounded border border-space-border/30 bg-space-900/30 text-xs font-mono text-white">
+                            <span class="truncate" x-text="key || '—'"></span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] uppercase tracking-widest"
+                                    :class="isApiKeyActive(idx) ? 'text-neon-green' : 'text-gray-500'"
+                                    x-text="isApiKeyActive(idx) ? 'Last used' : ''"></span>
+                                <button type="button"
+                                    class="text-[10px] font-semibold tracking-[0.2em] uppercase text-neon-purple hover:text-white"
+                                    @click="copyApiKey(key)">
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="!(config.ollamaApiKeys && config.ollamaApiKeys.length)">
+                        <div class="px-3 py-1 rounded border border-space-border/30 bg-space-900/30 text-xs font-mono text-gray-500">
+                            No API keys configured yet.
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs uppercase text-gray-500 font-semibold">Fallback Upstream URLs (optional, one per line)</label>
+                <textarea rows="4" class="textarea textarea-sm w-full mt-1 bg-space-800 border-space-border text-white font-mono"
+                    x-model="config.ollamaBaseUrlsText" placeholder="http://127.0.0.1:11434"></textarea>
+            </div>
+
+            <div>
+                <label class="text-xs uppercase text-gray-500 font-semibold">Failover Cooldown (ms)</label>
+                <input type="number" min="1000" max="300000" step="1000"
+                    class="input input-sm w-full mt-1 bg-space-800 border-space-border text-white font-mono"
+                    x-model.number="config.ollamaFailoverCooldownMs">
+            </div>
+
+            <button class="btn bg-neon-cyan hover:bg-cyan-600 border-none text-white"
+                :disabled="saving" :class="{ 'loading': saving }" @click="saveConfig()">
+                Save Key Pool
+            </button>
+        </div>
+
+        <div class="view-card space-y-4">
+            <h3 class="text-sm font-semibold text-neon-green uppercase tracking-wider">Send Test Request</h3>
+            <div>
+                <label class="text-xs uppercase text-gray-500 font-semibold">Model</label>
+                <input type="text" class="input input-sm w-full mt-1 bg-space-800 border-space-border text-white font-mono"
+                    x-model="test.model" placeholder="ollama/deepseek-v3.2:cloud">
+            </div>
+            <div>
+                <label class="text-xs uppercase text-gray-500 font-semibold">Prompt</label>
+                <textarea rows="5" class="textarea textarea-sm w-full mt-1 bg-space-800 border-space-border text-white"
+                    x-model="test.prompt" placeholder="Say hello"></textarea>
+            </div>
+            <div>
+                <label class="text-xs uppercase text-gray-500 font-semibold">Max Tokens</label>
+                <input type="number" min="16" max="2048" class="input input-sm w-full mt-1 bg-space-800 border-space-border text-white font-mono"
+                    x-model.number="test.maxTokens">
+            </div>
+            <button class="btn bg-neon-green hover:bg-green-600 border-none text-white"
+                :disabled="testing" :class="{ 'loading': testing }" @click="runTest()">
+                Send and Get Answer
+            </button>
+
+            <template x-if="test.response">
+                <div class="rounded border border-space-border/40 bg-space-800/40 p-3">
+                    <div class="text-xs uppercase text-gray-500 mb-1">Response</div>
+                    <pre class="text-xs text-gray-200 whitespace-pre-wrap" x-text="test.response"></pre>
+                </div>
+            </template>
+        </div>
+    </div>
+
+        <div class="view-card mt-6">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold text-white uppercase tracking-wider">Ollama Usage by Account</h3>
+                <span class="text-xs text-gray-500 font-mono" x-text="'Requests: ' + (usage?.totals?.requests || 0)"></span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <template x-for="(u, idx) in (usage?.upstreams || [])" :key="u.url">
+                <div class="rounded border border-space-border/30 bg-space-900/40 p-3">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] uppercase text-gray-500 font-semibold" x-text="'Account ' + (idx + 1)"></span>
+                        <span class="text-xs text-neon-cyan font-mono" x-text="(u.requests || 0) + ' req'"></span>
+                    </div>
+                    <div class="text-xs font-mono text-gray-300 truncate mb-1" x-text="u.url"></div>
+                    <div class="text-[11px] text-gray-500 font-mono">
+                        fail <span class="text-red-400" x-text="u.failures || 0"></span>
+                        / in <span class="text-neon-cyan" x-text="u.inputTokens || 0"></span>
+                        / out <span class="text-neon-green" x-text="u.outputTokens || 0"></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>

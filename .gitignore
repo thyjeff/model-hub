@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+claudeui/node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/*.log
+
+# IDE
+.vscode/
+.idea/
+.history/
+
+# Local config (may contain tokens)
+.claude/
+.deepvcode/
+
+# Runtime data
+data/
+
+# Test artifacts
+tests/utils/*.png
+tests/utils/*.jpg
+tests/utils/*.jpeg
+
+# Environment / secrets
+.env
+.env.local
+
+# Build output
+dist/
+build/
+
+# User data / account state
+~/.config/modelhub-proxy/
+*.vscdb
+
+# Backup files
+*.bak
+
+# Nested repos / subprojects (not part of this package)
+claudeui/
