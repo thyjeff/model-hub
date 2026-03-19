@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="images/modelhub.png" alt="Model Hub Logo" width="120" />
+<img src="images/logo.svg" alt="Model Hub Logo" width="140" />
 
 # Model Hub
 
@@ -19,7 +19,7 @@
 ---
 
 <div align="center">
-<img src="images/modelhub.png" alt="Model Hub Banner" width="80%" />
+<img src="images/logo.svg" alt="Model Hub" width="200" />
 </div>
 
 <br/>
