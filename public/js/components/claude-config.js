@@ -18,15 +18,15 @@ window.Components.claudeConfig = () => ({
 
     /**
      * Extract port from ANTHROPIC_BASE_URL for display
-     * @returns {string} Port number or '8081' as fallback
+     * @returns {string} Port number or '8080' as fallback
      */
     getProxyPort() {
         const baseUrl = this.config?.env?.ANTHROPIC_BASE_URL || '';
         try {
             const url = new URL(baseUrl);
-            return url.port || '8081';
+            return url.port || '8080';
         } catch {
-            return '8081';
+            return '8080';
         }
     },
 
@@ -72,11 +72,19 @@ window.Components.claudeConfig = () => ({
     },
 
     /**
+     * Get env safely — returns {} when config.env is undefined (e.g. Paid mode)
+     */
+    getEnv() {
+        return this.config?.env ?? {};
+    },
+
+    /**
      * Detect if any Gemini model has [1m] suffix
      */
     detectGemini1mSuffix() {
+        const env = this.getEnv();
         for (const field of this.geminiModelFields) {
-            const val = this.config.env[field];
+            const val = env[field];
             if (val && val.toLowerCase().includes('gemini') && val.includes('[1m]')) {
                 return true;
             }
@@ -88,9 +96,9 @@ window.Components.claudeConfig = () => ({
      * Toggle [1m] suffix for all Gemini models
      */
     toggleGemini1mSuffix(enabled) {
+        if (!this.config.env) this.config.env = {};
         for (const field of this.geminiModelFields) {
             const val = this.config.env[field];
-            // Fix: Case-insensitive check for gemini
             if (val && /gemini/i.test(val)) {
                 if (enabled && !val.includes('[1m]')) {
                     this.config.env[field] = val.trim() + '[1m]';
@@ -111,7 +119,6 @@ window.Components.claudeConfig = () => ({
         if (!this.config.env) this.config.env = {};
 
         let finalModelId = modelId;
-        // If 1M mode is enabled and it's a Gemini model, append the suffix
         if (this.gemini1mSuffix && modelId.toLowerCase().includes('gemini')) {
             if (!finalModelId.includes('[1m]')) {
                 finalModelId = finalModelId.trim() + '[1m]';
@@ -130,16 +137,14 @@ window.Components.claudeConfig = () => ({
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             this.config = data.config || {};
-            this.configPath = data.path || '~/.claude/settings.json'; // Save dynamic path
+            this.configPath = data.path || '~/.claude/settings.json';
             if (!this.config.env) this.config.env = {};
 
-            // Detect existing [1m] suffix state, default to true
             const hasExistingSuffix = this.detectGemini1mSuffix();
             const hasGeminiModels = this.geminiModelFields.some(f =>
                 this.config.env[f]?.toLowerCase().includes('gemini')
             );
 
-            // Default to enabled: if no suffix found but Gemini models exist, apply suffix
             if (!hasExistingSuffix && hasGeminiModels) {
                 this.toggleGemini1mSuffix(true);
             } else {
@@ -202,11 +207,7 @@ window.Components.claudeConfig = () => ({
 
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             Alpine.store('global').showToast(Alpine.store('global').t('claudeConfigRestored'), 'success');
-
-            // Close modal
             document.getElementById('restore_defaults_modal').close();
-
-            // Reload the config to reflect the changes
             await this.fetchConfig();
         } catch (e) {
             Alpine.store('global').showToast(Alpine.store('global').t('restoreConfigFailed') + ': ' + e.message, 'error');
@@ -219,9 +220,6 @@ window.Components.claudeConfig = () => ({
     // Presets Management
     // ==========================================
 
-    /**
-     * Fetch all saved presets from the server
-     */
     async fetchPresets() {
         const password = Alpine.store('global').webuiPassword;
         try {
@@ -232,7 +230,6 @@ window.Components.claudeConfig = () => ({
             const data = await response.json();
             if (data.status === 'ok') {
                 this.presets = data.presets || [];
-                // Auto-select first preset if none selected
                 if (this.presets.length > 0 && !this.selectedPresetName) {
                     this.selectedPresetName = this.presets[0].name;
                 }
@@ -242,19 +239,12 @@ window.Components.claudeConfig = () => ({
         }
     },
 
-    /**
-     * Load the selected preset into the form (does not save to Claude CLI)
-     */
     loadSelectedPreset() {
         const preset = this.presets.find(p => p.name === this.selectedPresetName);
-        if (!preset) {
-            return;
-        }
+        if (!preset) return;
 
-        // Merge preset config into current config.env
+        if (!this.config.env) this.config.env = {};
         this.config.env = { ...this.config.env, ...preset.config };
-
-        // Update Gemini 1M toggle based on merged config (not just preset)
         this.gemini1mSuffix = this.detectGemini1mSuffix();
 
         Alpine.store('global').showToast(
@@ -263,10 +253,6 @@ window.Components.claudeConfig = () => ({
         );
     },
 
-    /**
-     * Check if current config matches any saved preset
-     * @returns {boolean} True if current config matches a preset
-     */
     currentConfigMatchesPreset() {
         const relevantKeys = [
             'ANTHROPIC_BASE_URL',
@@ -278,10 +264,11 @@ window.Components.claudeConfig = () => ({
             'ANTHROPIC_DEFAULT_HAIKU_MODEL'
         ];
 
+        const env = this.getEnv();
         for (const preset of this.presets) {
             let matches = true;
             for (const key of relevantKeys) {
-                const currentVal = this.config.env[key] || '';
+                const currentVal = env[key] || '';
                 const presetVal = preset.config[key] || '';
                 if (currentVal !== presetVal) {
                     matches = false;
@@ -293,18 +280,12 @@ window.Components.claudeConfig = () => ({
         return false;
     },
 
-    /**
-     * Handle preset selection change - auto-load with unsaved changes warning
-     * @param {string} newPresetName - The newly selected preset name
-     */
     async onPresetSelect(newPresetName) {
         if (!newPresetName || newPresetName === this.selectedPresetName) return;
 
-        // Check if current config has unsaved changes (doesn't match any preset)
         const hasUnsavedChanges = !this.currentConfigMatchesPreset();
 
         if (hasUnsavedChanges) {
-            // Store pending preset and show confirmation modal
             this.pendingPresetName = newPresetName;
             document.getElementById('unsaved_changes_modal').showModal();
             return;
@@ -314,9 +295,6 @@ window.Components.claudeConfig = () => ({
         this.loadSelectedPreset();
     },
 
-    /**
-     * Confirm loading preset despite unsaved changes
-     */
     confirmLoadPreset() {
         document.getElementById('unsaved_changes_modal').close();
         this.selectedPresetName = this.pendingPresetName;
@@ -324,12 +302,8 @@ window.Components.claudeConfig = () => ({
         this.loadSelectedPreset();
     },
 
-    /**
-     * Cancel loading preset - revert dropdown selection
-     */
     cancelLoadPreset() {
         document.getElementById('unsaved_changes_modal').close();
-        // Revert the dropdown to current selection
         const select = document.querySelector('[aria-label="Select preset"]');
         if (select) select.value = this.selectedPresetName;
         this.pendingPresetName = '';
@@ -343,11 +317,7 @@ window.Components.claudeConfig = () => ({
         this.saveCurrentAsPreset();
     },
 
-    /**
-     * Save the current config as a new preset
-     */
     async saveCurrentAsPreset() {
-        // Clear the input and show the save preset modal
         this.newPresetName = '';
         const modal = document.getElementById('save_preset_modal');
         if (!modal) {
@@ -367,9 +337,6 @@ window.Components.claudeConfig = () => ({
         await this.executeSavePreset(this.selectedPresetName);
     },
 
-    /**
-     * Execute preset save after user enters name
-     */
     async executeSavePreset(name) {
         const cleanedName = String(name || '').trim();
         if (!cleanedName) {
@@ -385,7 +352,8 @@ window.Components.claudeConfig = () => ({
         const password = Alpine.store('global').webuiPassword;
 
         try {
-            // Save only relevant env vars
+            // FIX: use getEnv() so this works even when config.env is undefined (Paid mode)
+            const env = this.getEnv();
             const relevantKeys = [
                 'ANTHROPIC_BASE_URL',
                 'ANTHROPIC_AUTH_TOKEN',
@@ -397,9 +365,7 @@ window.Components.claudeConfig = () => ({
             ];
             const presetConfig = {};
             relevantKeys.forEach(k => {
-                if (this.config.env[k]) {
-                    presetConfig[k] = this.config.env[k];
-                }
+                if (env[k]) presetConfig[k] = env[k];
             });
 
             const { response, newPassword } = await window.utils.request('/api/claude/presets', {
@@ -414,7 +380,7 @@ window.Components.claudeConfig = () => ({
             if (data.status === 'ok') {
                 this.presets = data.presets || [];
                 this.selectedPresetName = cleanedName;
-                this.newPresetName = ''; // Clear the input
+                this.newPresetName = '';
                 Alpine.store('global').showToast(
                     Alpine.store('global').t('presetSaved') || `Preset "${cleanedName}" saved`,
                     'success'
@@ -422,7 +388,6 @@ window.Components.claudeConfig = () => ({
                 const modal = document.getElementById('save_preset_modal');
                 if (modal && modal.open) modal.close();
 
-                // If save was triggered from preset-switch warning, continue the load flow.
                 if (this.saveThenLoadPresetName) {
                     this.selectedPresetName = this.saveThenLoadPresetName;
                     this.saveThenLoadPresetName = '';
@@ -439,20 +404,14 @@ window.Components.claudeConfig = () => ({
         }
     },
 
-    /**
-     * Delete the selected preset
-     */
     async deleteSelectedPreset() {
         if (!this.selectedPresetName) {
             Alpine.store('global').showToast(Alpine.store('global').t('noPresetSelected'), 'warning');
             return;
         }
 
-        // Confirm deletion
         const confirmMsg = Alpine.store('global').t('deletePresetConfirm', { name: this.selectedPresetName });
-        if (!confirm(confirmMsg)) {
-            return;
-        }
+        if (!confirm(confirmMsg)) return;
 
         this.deletingPreset = true;
         const password = Alpine.store('global').webuiPassword;
@@ -469,7 +428,6 @@ window.Components.claudeConfig = () => ({
             const data = await response.json();
             if (data.status === 'ok') {
                 this.presets = data.presets || [];
-                // Select first available preset or clear selection
                 this.selectedPresetName = this.presets.length > 0 ? this.presets[0].name : '';
                 Alpine.store('global').showToast(
                     Alpine.store('global').t('presetDeleted') || 'Preset deleted',
@@ -489,9 +447,6 @@ window.Components.claudeConfig = () => ({
     // Mode Toggle (Proxy/Paid)
     // ==========================================
 
-    /**
-     * Fetch current mode from server
-     */
     async fetchMode() {
         const password = Alpine.store('global').webuiPassword;
         try {
@@ -508,10 +463,6 @@ window.Components.claudeConfig = () => ({
         }
     },
 
-    /**
-     * Toggle between proxy and paid mode
-     * @param {string} newMode - Target mode ('proxy' or 'paid')
-     */
     async toggleMode(newMode) {
         if (this.modeLoading || newMode === this.currentMode) return;
 
@@ -536,8 +487,6 @@ window.Components.claudeConfig = () => ({
                     if (!this.config.env) this.config.env = {};
                 }
                 Alpine.store('global').showToast(data.message, 'success');
-
-                // Refresh the config and mode state
                 await this.fetchConfig();
                 await this.fetchMode();
             } else {
@@ -553,5 +502,3 @@ window.Components.claudeConfig = () => ({
         }
     }
 });
-
-
