@@ -3,55 +3,50 @@
  */
 
 // ── Auth Guard ──────────────────────────────────────────────────────────────
-// Runs before Alpine. Uses localStorage so login persists across server restarts.
-// Only prompts again if the stored password becomes invalid.
+// Uses localStorage so login persists across server restarts.
+// Only re-prompts if the stored password is actually wrong.
 const MH_KEY = 'mh_pw_token';
 
 (async () => {
     try {
         const cfgRes = await fetch('/api/config');
-        if (!cfgRes.ok) return; // server error — let dashboard load
+        if (!cfgRes.ok) return;
 
         const cfgData = await cfgRes.json();
         // webuiPassword is redacted to '********' when set
-        const hasPassword = cfgData?.config?.webuiPassword &&
-                            cfgData.config.webuiPassword !== '';
+        const hasPassword = cfgData?.config?.webuiPassword === '********';
 
         if (!hasPassword) {
-            // No password configured — mark visited so setup doesn't show again
-            if (!localStorage.getItem(MH_KEY)) {
-                localStorage.setItem(MH_KEY, '__no_password__');
-            }
+            // No password on server — mark visited and proceed
+            localStorage.setItem(MH_KEY, '__no_password__');
             window.__mhPassword = null;
             return;
         }
 
-        // Password is set — check localStorage for saved token
+        // Password set — check localStorage
         const stored = localStorage.getItem(MH_KEY);
         if (!stored || stored === '__no_password__') {
             window.location.replace('/login.html');
             return;
         }
 
-        // Validate the stored password is still correct
+        // Validate stored password against API
         const testRes = await fetch('/api/accounts', {
             headers: { 'x-webui-password': stored }
         });
 
         if (testRes.ok) {
-            // Valid — set global password for all API calls
             window.__mhPassword = stored;
         } else {
-            // Wrong password (changed server-side) — force re-login
             localStorage.removeItem(MH_KEY);
             window.location.replace('/login.html');
         }
     } catch {
-        // Network error — allow through, dashboard will show connection error
+        // Network error — allow through
     }
 })();
 
-// Inject password header into all internal fetch calls automatically
+// Inject password header into all internal fetch calls
 const _origFetch = window.fetch;
 window.fetch = function(url, opts) {
     opts = opts || {};
