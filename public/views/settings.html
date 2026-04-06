@@ -1,4 +1,4 @@
-<div x-data class="view-container-centered modelhub-minimal">
+﻿<div x-data class="view-container-centered modelhub-minimal">
 <style>
   .modelhub-minimal .view-card { background: #f7fafc !important; border: 1px solid #d6dee8 !important; }
   .modelhub-minimal .card { background: #ffffff !important; border-color: #d6dee8 !important; }
@@ -381,7 +381,7 @@
                                     @input="searchTerm = $event.target.value" @focus="openDropdown()"
                                     @click.away="closeDropdown()"
                                     @keydown="onKeydown($event)"
-                                    x-ref="dropdownInput"
+                                    x-ref="dropdownInput" :data-model-field="field"
                                     class="input input-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white focus:!bg-space-800 pr-8 placeholder:!text-gray-600"
                                     :class="[focusBorderClass, { '!text-gray-500': !open && !currentValue }]"
                                     :placeholder="open ? $store.global.t('typeToSearch') : ''"
@@ -456,7 +456,7 @@
                                     @input="searchTerm = $event.target.value" @focus="openDropdown()"
                                     @click.away="closeDropdown()"
                                     @keydown="onKeydown($event)"
-                                    x-ref="dropdownInput"
+                                    x-ref="dropdownInput" :data-model-field="field"
                                     class="input input-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white focus:!bg-space-800 pr-8 placeholder:!text-gray-600"
                                     :class="[focusBorderClass, { '!text-gray-500': !open && !currentValue }]"
                                     :placeholder="open ? $store.global.t('typeToSearch') : ''"
@@ -535,7 +535,7 @@
                                     @input="searchTerm = $event.target.value" @focus="openDropdown()"
                                     @click.away="closeDropdown()"
                                     @keydown="onKeydown($event)"
-                                    x-ref="dropdownInput"
+                                    x-ref="dropdownInput" :data-model-field="field"
                                     class="input input-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white focus:!bg-space-800 pr-8 placeholder:!text-gray-600"
                                     :class="[focusBorderClass, { '!text-gray-500': !open && !currentValue }]"
                                     :placeholder="open ? $store.global.t('typeToSearch') : ''"
@@ -605,7 +605,7 @@
                                     @input="searchTerm = $event.target.value" @focus="openDropdown()"
                                     @click.away="closeDropdown()"
                                     @keydown="onKeydown($event)"
-                                    x-ref="dropdownInput"
+                                    x-ref="dropdownInput" :data-model-field="field"
                                     class="input input-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white focus:!bg-space-800 pr-8 placeholder:!text-gray-600"
                                     :class="[focusBorderClass, { '!text-gray-500': !open && !currentValue }]"
                                     :placeholder="open ? $store.global.t('typeToSearch') : ''"
@@ -675,7 +675,7 @@
                                     @input="searchTerm = $event.target.value" @focus="openDropdown()"
                                     @click.away="closeDropdown()"
                                     @keydown="onKeydown($event)"
-                                    x-ref="dropdownInput"
+                                    x-ref="dropdownInput" :data-model-field="field"
                                     class="input input-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white focus:!bg-space-800 pr-8 placeholder:!text-gray-600"
                                     :class="[focusBorderClass, { '!text-gray-500': !open && !currentValue }]"
                                     :placeholder="open ? $store.global.t('typeToSearch') : ''"
@@ -2404,5 +2404,6 @@
         </div>
     </div>
 </div>
+
 
 

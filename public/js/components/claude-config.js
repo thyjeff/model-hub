@@ -182,6 +182,14 @@ window.Components.claudeConfig = () => ({
             if (newPassword) Alpine.store('global').webuiPassword = newPassword;
 
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (data?.config) {
+                this.config = data.config;
+                if (!this.config.env) this.config.env = {};
+            }
+            if (data?.path) {
+                this.configPath = data.path;
+            }
             const activeModel = this.config?.env?.ANTHROPIC_MODEL || '';
             Alpine.store('global').showToast(Alpine.store('global').t('claudeConfigSaved') + (activeModel ? ' Model: ' + activeModel : ''), 'success');
         } catch (e) {
